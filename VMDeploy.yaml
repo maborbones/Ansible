@@ -1,0 +1,52 @@
+--
+- name: Deploy a new VM from a template
+  hosts: ESXiTerra
+  gather_facts: no
+  vars:
+    vm_name: Deploy_test
+    vm_template: TempW2019
+    vm_network: "ProdSwitch"
+    vm_network_ip: "10.2.9.26"
+    vm_network_mask: "255.255.255.0"
+    vm_network_gateway: "10.2.9.2"
+    vm_dns_server: "8.8.8.8"
+  tasks:
+  - name: Clone VM from Template
+    vmware_guest:
+      hostname: "{{ inventory_hostname }}"
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      name: "{{ vm_name }}"
+      template: "{{ vm_template }}"
+      state: poweredoff
+      folder: /vm/folder
+    delegate_to: localhost
+
+  - name: Edit VM Configuration
+    vmware_guest:
+      hostname: "{{ inventory_hostname }}"
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      name: "{{ vm_name }}"
+      state: present
+      hardware:
+        memory_mb: 2048
+        num_cpus: 2
+      networks:
+        - label: "{{ vm_network }}"
+          ip: "{{ vm_network_ip }}"
+          netmask: "{{ vm_network_mask }}"
+          gateway: "{{ vm_network_gateway }}"
+          dns_servers:
+            - "{{ vm_dns_server }}"
+    delegate_to: localhost
+
+  - name: Power on VM
+    vmware_guest:
+      hostname: "{{ inventory_hostname }}"
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      name: "{{ vm_name }}"
+      state: poweredon
+    delegate_to: localhost
+
